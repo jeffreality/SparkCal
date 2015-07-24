@@ -17,16 +17,25 @@
 
 @property (nonatomic, weak) IBOutlet UITableView *tv;
 @property (nonatomic, weak) IBOutlet UIView *legend;
+
 @property (nonatomic, strong) NSMutableArray *data;
+@property (nonatomic, strong) NSArray *legendTitles;
+@property (nonatomic, strong) NSArray *legendColors;
+@property (nonatomic, strong) NSMutableArray *currentColors;
 
 @end
 
 @implementation ViewController
 
-#define RGB(r,g,b)      [UIColor colorWithRed:r/255.0 green:g/255.0 blue:b/255.0 alpha:1.0]
+#define RGB(r,g,b)                      [UIColor colorWithRed:r/255.0 green:g/255.0 blue:b/255.0 alpha:1.0]
+#define MAX_PROJECTS_TO_GENERATE        20
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
+    self.legendTitles = @[@"UX/Wireframing", @"Graphic Design", @"Coding", @"Testing/QA", @"Product Launch"];
+    self.legendColors = @[[UIColor redColor], [UIColor orangeColor], RGB(34,139,34), [UIColor blueColor], RGB(255,20,147)];
+    self.currentColors = [self.legendColors mutableCopy];
     
     [self drawLegend];
     
@@ -34,25 +43,16 @@
     [self.tv reloadData];
 }
 
-#pragma mark - Switch (at bottom of screen)
+#pragma mark - Change the look of the SparkCals
 
-- (IBAction)changeBlend:(UISwitch *)blendSwitch {
+- (void) changeSparkCals:(void(^)(SparkCal *cal))calBlock {
     // go through data and switch blend values
     for (NSInteger j = 0; j < [self.data count]; j++) {
-        /*
-         [self.data addObject:@{
-         @"name" : [self generateProjectName],
-         @"timeline" : [self generateTimeline]
-         }];
-         */
         NSDictionary *dict = [self.data objectAtIndex:j];
         NSMutableArray *timeline = [[dict objectForKey:@"timeline"] mutableCopy];
         for (NSInteger k = 0; k < [timeline count]; k++) {
             SparkCal *cal = [timeline objectAtIndex:k];
-            if (blendSwitch.on)
-                [cal disableBorderBetweenDays];
-            else
-                [cal enableBorderBetweenDays];
+            calBlock(cal);
             [timeline setObject:cal atIndexedSubscript:k];
         }
         [self.data setObject:@{ @"name" : [dict objectForKey:@"name"], @"timeline" : [timeline copy] } atIndexedSubscript:j];
@@ -60,25 +60,89 @@
     
     // then reload table data
     [self.tv reloadData];
+    
+}
+
+- (IBAction)changeBlend:(UISwitch *)blendSwitch {
+    [self changeSparkCals:^(SparkCal *cal) {
+        if (blendSwitch.on)
+            [cal disableBorderBetweenDays];
+        else
+            [cal enableBorderBetweenDays];
+    }];
+}
+
+- (UIColor*)changeAlpha:(UIColor*)color amount:(CGFloat)amount {
+    CGFloat hue, saturation, brightness, alpha;
+    if ([color getHue:&hue saturation:&saturation brightness:&brightness alpha:&alpha]) {
+        return [UIColor colorWithHue:hue saturation:saturation brightness:brightness alpha:amount];
+    }
+    
+    CGFloat white;
+    if ([color getWhite:&white alpha:&alpha]) {
+        return [UIColor colorWithWhite:white alpha:amount];
+    }
+    
+    return nil;
+}
+
+- (void)fadeColorsExcept:(UIButton *)sender {
+    NSInteger colorIndex = sender.tag;
+    [self changeSparkCals:^(SparkCal *cal) {
+        for (NSInteger c = 0; c < [self.legendColors count]; c++) {
+            if (c != colorIndex) {
+                UIColor *newColor = [self changeAlpha:[self.legendColors objectAtIndex:c] amount:0.2f];
+                [cal replaceColor:[self.currentColors objectAtIndex:c] with:newColor];
+            } else {
+                [cal replaceColor:[self.currentColors objectAtIndex:c] with:[self.legendColors objectAtIndex:c]];
+            }
+        }
+    }];
+    for (NSInteger c = 0; c < [self.legendColors count]; c++) {
+        if (c != colorIndex) {
+            UIColor *newColor = [self changeAlpha:[self.legendColors objectAtIndex:c] amount:0.2f];
+            [self.currentColors setObject:newColor atIndexedSubscript:c];
+        } else {
+            [self.currentColors setObject:[self.legendColors objectAtIndex:c] atIndexedSubscript:c];
+        }
+    }
+    [self redrawColorButtons];
+}
+
+- (IBAction)restoreColors:(id)sender {
+    [self changeSparkCals:^(SparkCal *cal) {
+        for (NSInteger c = 0; c < [self.legendColors count]; c++) {
+            [cal replaceColor:[self.currentColors objectAtIndex:c] with:[self.legendColors objectAtIndex:c]];
+        }
+    }];
+    self.currentColors = [self.legendColors mutableCopy];
+    [self redrawColorButtons];
 }
 
 #pragma mark - Legend (at bottom of screen)
 
+- (void) redrawColorButtons {
+    for (UIView *b in self.legend.subviews){
+        if([b isKindOfClass:[UIButton class]] && b.tag >= 0){
+            UIButton *btn = (UIButton *)b;
+            [btn setBackgroundColor:[self.currentColors objectAtIndex:btn.tag]];
+        }
+    }
+}
+
 - (void) drawLegend {
-    NSArray *titles = @[@"UX/Wireframing", @"Graphic Design", @"Coding", @"Testing/QA", @"Product Launch"];
-    NSArray *colors = @[[UIColor redColor], [UIColor orangeColor], RGB(34,139,34), [UIColor blueColor], RGB(255,20,147)];
     
-    for (NSInteger j = 0; j < [titles count]; j++) {
-        float downBlend = 2.4;
-        if (j + 1 == [titles count])
-            downBlend = 1;
-        UIView *c = [[UIView alloc] initWithFrame:CGRectMake(8, 8 + ((12 + 22) * j), 22, 22*downBlend)];
-        [c setBackgroundColor:[colors objectAtIndex:j]];
+    for (NSInteger j = 0; j < [self.legendTitles count]; j++) {
+        UIButton *c = [UIButton buttonWithType:UIButtonTypeCustom];
+        c.tag = j;
+        c.frame = CGRectMake(8, 8 + ((12 + 22) * j), 22, 22);
+        [c setBackgroundColor:[self.legendColors objectAtIndex:j]];
         c.layer.cornerRadius = 11;
+        [c addTarget:self action:@selector(fadeColorsExcept:) forControlEvents:UIControlEventTouchUpInside];
         [self.legend addSubview:c];
         
         UILabel *t = [[UILabel alloc] initWithFrame:CGRectMake(38, 4 + ((4 + 30) * j), 200, 30)];
-        t.text = [titles objectAtIndex:j];
+        t.text = [self.legendTitles objectAtIndex:j];
         [self.legend addSubview:t];
     }
 }
@@ -115,7 +179,7 @@
 
 - (void) generateData {
     self.data = [@[] mutableCopy];
-    for (NSInteger j = 0; j < 20; j++) {
+    for (NSInteger j = 0; j < MAX_PROJECTS_TO_GENERATE; j++) {
         [self.data addObject:@{
                                @"name" : [self generateProjectName],
                                @"timeline" : [self generateTimeline]
@@ -173,27 +237,27 @@
         
         if (monthIdx >= [dateBizReqStart monthValue] && monthIdx <= [dateBizReqEnd monthValue]) {
             // biz requirements
-            [cal setColor:[UIColor redColor] fromDate:dateBizReqStart toDate:dateBizReqEnd];
+            [cal setColor:[self.legendColors objectAtIndex:0] fromDate:dateBizReqStart toDate:dateBizReqEnd];
         }
         
         if (monthIdx >= [dateDesignStart monthValue] && monthIdx <= [dateDesignEnd monthValue]) {
             // biz requirements
-            [cal setColor:[UIColor orangeColor] fromDate:dateDesignStart toDate:dateDesignEnd];
+            [cal setColor:[self.legendColors objectAtIndex:1] fromDate:dateDesignStart toDate:dateDesignEnd];
         }
         
         if (monthIdx >= [dateDevStart monthValue] && monthIdx <= [dateDevEnd monthValue]) {
             // biz requirements
-            [cal setColor:RGB(34,139,34) fromDate:dateDevStart toDate:dateDevEnd];
+            [cal setColor:[self.legendColors objectAtIndex:2] fromDate:dateDevStart toDate:dateDevEnd];
         }
         
         if (monthIdx >= [dateTestStart monthValue] && monthIdx <= [dateTestEnd monthValue]) {
             // biz requirements
-            [cal setColor:[UIColor blueColor] fromDate:dateTestStart toDate:dateTestEnd];
+            [cal setColor:[self.legendColors objectAtIndex:3] fromDate:dateTestStart toDate:dateTestEnd];
         }
         
         if (monthIdx == [dateLaunch monthValue]) {
             // biz requirements
-            [cal setColor:RGB(255,20,147) fromDate:dateLaunch toDate:dateLaunch];
+            [cal setColor:[self.legendColors objectAtIndex:4] fromDate:dateLaunch toDate:dateLaunch];
         }
         
         [arrViews addObject:cal];

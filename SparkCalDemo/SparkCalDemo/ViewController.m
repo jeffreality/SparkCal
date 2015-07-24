@@ -29,7 +29,7 @@
     
     // Example 2: small, with custom colors
     SparkCal *cal2 = [[SparkCal alloc] initWithFrame:CGRectMake(60, 100, 40, 40)];
-    [cal2 setMainColors:@[RGB(0,192,0), RGB(0,128,128)]];
+    [cal2 setMainColors:@[RGB(232,237,244), RGB(149,172,202)]];
     [self.view addSubview:cal2];
     
     
@@ -53,20 +53,20 @@
     [cal4 disableBorderBetweenDays];
     [cal4 setColors:@[
                       [UIColor whiteColor],
-                      [UIColor redColor],
-                      [UIColor orangeColor],
-                      [UIColor yellowColor],
-                      [UIColor greenColor],
-                      [UIColor blueColor],
-                      [UIColor colorWithRed:0.29 green:0.0 blue:0.5 alpha:1.0],
-                      [UIColor purpleColor]
+                      RGB(247,249,249),
+                      RGB(99, 210, 255),
+                      RGB(32, 129, 195),
+                      RGB(120, 213, 215),
+                      RGB(35, 181, 211),
+                      RGB(86, 114, 124),
+                      RGB(190, 216, 212)
                       ]
             forDays:@[
                       n, @[@1], @[@1], @[@1], @[@1, @2], @[@2], @[@2],
-                      @[@2], @[@2], @[@2], @[@2], @[@2], @[@2], @[@3],
+                      @[@2], @[@2], @[@2], @[@2], @[@2], @[@3], @[@3],
                       @[@3], @[@3, @4], @[@4], @[@4], @[@4], @[@4], @[@4],
                       @[@4], @[@4], @[@4], @[@4, @5], @[@5], @[@5], @[@5],
-                      @[@6], @[@7], @[@7], @[@7], n, n, n
+                      @[@6], @[@6,@7], @[@7], @[@7], n, n, n
                       ]];
     [self.view addSubview:cal4];
     

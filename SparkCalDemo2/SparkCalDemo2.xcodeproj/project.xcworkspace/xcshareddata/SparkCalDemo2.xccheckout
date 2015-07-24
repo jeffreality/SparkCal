@@ -7,14 +7,14 @@
 	<key>IDESourceControlProjectIdentifier</key>
 	<string>BD4E4884-CE99-46E6-B373-44491BF92801</string>
 	<key>IDESourceControlProjectName</key>
-	<string>project</string>
+	<string>SparkCalDemo2</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
 		<key>CD00C08D9715D5F660E932208D11FC413A535927</key>
 		<string>https://github.com/jeffreality/SparkCal.git</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
-	<string>SparkCalDemo2/SparkCalDemo2.xcodeproj/project.xcworkspace</string>
+	<string>SparkCalDemo2/SparkCalDemo2.xcodeproj</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
 		<key>CD00C08D9715D5F660E932208D11FC413A535927</key>

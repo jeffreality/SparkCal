@@ -18,5 +18,6 @@
 
 - (void) setDate:(NSDate *)date;
 - (void) setColor:(UIColor *)color fromDate:(NSDate *)startDate toDate:(NSDate *)endDate;
+- (void) replaceColor:(UIColor *)origColor with:(UIColor *)newColor;
 
 @end

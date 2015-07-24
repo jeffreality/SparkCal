@@ -81,7 +81,7 @@
 
 - (void) setMainColors:(NSArray *)colorArray {
     /*
-     colorArray : an array of two UIColors
+     colorArray : an array of (at least) two UIColors
        - first entry: background color for the SparkCal view
        - second entry: primary color for the view
      */
@@ -94,7 +94,6 @@
         }
     }
 }
-
 
 - (void) setColors:(NSArray *)colorArray forDays:(NSArray *)dayArray {
     /*
@@ -175,6 +174,25 @@
     colorList = [colorListMutable copy];
     
     return (position);
+}
+
+- (void) replaceColor:(UIColor *)origColor with:(UIColor *)newColor {
+    /*
+     Lets you change a previously created color after the fact.
+     Used for changing the alpha of a color (or changing a palette entirely) after a SparkCal is created.
+     */
+    NSMutableArray *colorListMutable = [colorList mutableCopy];
+    if (!colorListMutable)
+        colorListMutable = [@[] mutableCopy];
+    
+    for (NSInteger j = 0; j < [colorList count]; j++) {
+        if ([origColor isEqualToColor:[colorList objectAtIndex:j]]) {
+            [colorListMutable setObject:newColor atIndexedSubscript:j];
+            break;
+        }
+    }
+    
+    colorList = [colorListMutable copy];
 }
 
 - (void) setColor:(UIColor *)color fromDate:(NSDate *)startDate toDate:(NSDate *)endDate {
